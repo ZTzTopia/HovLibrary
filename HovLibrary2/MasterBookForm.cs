@@ -7,6 +7,7 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Validation;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace HovLibrary2
     public partial class MasterBookForm : Form
     {
         private readonly HovLibraryModel _model;
-        private IQueryable<Book> _bookQueryable;
+        private IQueryable<Book> _bookLastQueryable;
         private int _selectedId;
 
         public MasterBookForm()
@@ -39,7 +40,10 @@ namespace HovLibrary2
                 searchByButton.Click += SearchByButton_Click;
 
                 filterLanguageComboBox.Items.AddRange(new object[] { "" });
-                filterLanguageComboBox.Items.AddRange(_model.Languages.Where(l => l.deleted_at == null).Select(l => l.long_text).ToArray<object>());
+                filterLanguageComboBox.Items.AddRange(_model.Languages
+                    .Where(l => l.deleted_at == null)
+                    .Select(l => l.long_text)
+                    .ToArray<object>());
                 filterLanguageComboBox.TextChanged += (o, args) => applyButton.Enabled = true;
                 minPublishDateTimePicker.TextChanged += (o, args) => applyButton.Enabled = true;
                 maxPublishDateTimePicker.TextChanged += (o, args) => applyButton.Enabled = true;
@@ -53,8 +57,14 @@ namespace HovLibrary2
                 dataGridView.SelectionChanged += DataGridView_SelectionChanged;
                 dataGridView.CellContentClick += DataGridView_CellContentClick;
                 
-                languageComboBox.Items.AddRange(_model.Languages.Where(l => l.deleted_at == null).Select(l => l.long_text).ToArray<object>());
-                publisherComboBox.Items.AddRange(_model.Publishers.Where(p => p.deleted_at == null).Select(p => p.name).ToArray<object>());
+                languageComboBox.Items.AddRange(_model.Languages
+                    .Where(l => l.deleted_at == null)
+                    .Select(l => l.long_text)
+                    .ToArray<object>());
+                publisherComboBox.Items.AddRange(_model.Publishers
+                    .Where(p => p.deleted_at == null)
+                    .Select(p => p.name)
+                    .ToArray<object>());
                 saveChangesButton.Click += SaveChangesButton_Click;
             };
         }
@@ -66,7 +76,7 @@ namespace HovLibrary2
                 bookQueryable = _model.Books;
             }
 
-            _bookQueryable = bookQueryable;
+            _bookLastQueryable = bookQueryable;
             var books = bookQueryable
                 .Where(b => b.deleted_at == null).AsEnumerable()
                 .Select(b =>
@@ -129,20 +139,19 @@ namespace HovLibrary2
                     .Where(b => b.publication_date >= minPublishDateTimePicker.Value.Date && b.publication_date <= maxPublishDateTimePicker.Value.Date.AddHours(23).AddMinutes(59)).AsQueryable();
             }
 
-            if (minPageCountNumericUpDown.Value != 0 || maxPageCountNumericUpDown.Value != 0)
+            if (maxPageCountNumericUpDown.Value != 0)
             {
                 if (minPageCountNumericUpDown.Value > maxPageCountNumericUpDown.Value)
                 {
                     MessageBox.Show(@"Minimal page count is greater than maximal page count.", @"Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-
-
+                
                 books = books
                     .Where(b => b.number_of_pages >= minPageCountNumericUpDown.Value && b.number_of_pages <= maxPageCountNumericUpDown.Value);
             }
 
-            if (minRatingsNumericUpDown.Value != 0 || maxRatingsNumericUpDown.Value != 0)
+            if (maxRatingsNumericUpDown.Value != 0)
             {
                 if (minRatingsNumericUpDown.Value > maxRatingsNumericUpDown.Value)
                 {
@@ -150,8 +159,8 @@ namespace HovLibrary2
                     return;
                 }
 
-                double.TryParse(minRatingsNumericUpDown.Value.ToString(), out var minRatings);
-                double.TryParse(maxRatingsNumericUpDown.Value.ToString(), out var maxRatings);
+                double.TryParse(minRatingsNumericUpDown.Value.ToString(CultureInfo.InvariantCulture), out var minRatings);
+                double.TryParse(maxRatingsNumericUpDown.Value.ToString(CultureInfo.InvariantCulture), out var maxRatings);
 
                 books = books
                     .Where(b => b.average_rating >= minRatings && b.average_rating <= maxRatings);
@@ -235,7 +244,7 @@ namespace HovLibrary2
                     _model.SaveChanges();
                     MessageBox.Show(@"Data successfully deleted.", @"Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    LoadData(_bookQueryable);
+                    LoadData(_bookLastQueryable);
                     return;
                 }
             }
@@ -262,6 +271,18 @@ namespace HovLibrary2
 
         private void SaveChangesButton_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(languageComboBox.Text) ||
+                string.IsNullOrWhiteSpace(publisherComboBox.Text) ||
+                string.IsNullOrWhiteSpace(titleTextBox.Text) ||
+                string.IsNullOrWhiteSpace(isbnTextBox.Text) ||
+                string.IsNullOrWhiteSpace(isbn13TextBox.Text) ||
+                string.IsNullOrWhiteSpace(authorsTextBox.Text) ||
+                string.IsNullOrWhiteSpace(pageCountTextBox.Text))
+            {
+                MessageBox.Show(@"One or more of text box is empty.", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             saveChangesButton.Enabled = false;
 
             var book = _model.Books
@@ -321,7 +342,7 @@ namespace HovLibrary2
             _model.SaveChanges();
             MessageBox.Show(@"Data successfully changed.", @"Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            LoadData(_bookQueryable);
+            LoadData(_bookLastQueryable);
         }
     }
 }

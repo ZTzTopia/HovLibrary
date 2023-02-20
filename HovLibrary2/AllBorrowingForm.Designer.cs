@@ -142,7 +142,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(411, 9);
+            this.label10.Location = new System.Drawing.Point(411, 7);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(30, 16);
             this.label10.TabIndex = 4;

@@ -16,7 +16,7 @@ namespace HovLibrary2
     public partial class AllBorrowingForm : Form
     {
         private readonly HovLibraryModel _model;
-        private IQueryable<Borrowing> _borrowingFilter;
+        private IQueryable<Borrowing> _borrowingLastQueryable;
 
         public AllBorrowingForm()
         {
@@ -47,7 +47,7 @@ namespace HovLibrary2
                 borrowingQueryable = _model.Borrowings;
             }
 
-            _borrowingFilter = borrowingQueryable;
+            _borrowingLastQueryable = borrowingQueryable;
             var borrowings = borrowingQueryable
                 .Where(b => b.deleted_at == null).AsEnumerable()
                 .Select(b => new
@@ -79,9 +79,6 @@ namespace HovLibrary2
                 case "Returned":
                     borrowings = borrowings.Where(b => b.return_date != null);
                     break;
-                default:
-                    LoadData();
-                    return;
             }
 
             if (minBorrowDateTimePicker.Value.Date != maxBorrowDateTimePicker.Value.Date)
@@ -101,13 +98,13 @@ namespace HovLibrary2
 
         private void DataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            var editColumn = dataGridView.Columns["ReturnColumn"];
-            if (editColumn == null)
+            var returnColumn = dataGridView.Columns["ReturnColumn"];
+            if (returnColumn == null)
             {
                 return;
             }
 
-            if (e.ColumnIndex != editColumn.Index)
+            if (e.ColumnIndex != returnColumn.Index)
             {
                 return;
             }
@@ -125,6 +122,12 @@ namespace HovLibrary2
                 return;
             }
 
+            if (borrowing.return_date != null)
+            {
+                MessageBox.Show(@"This book is already returned.", @"Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             borrowing.return_date = DateTime.Now;
             if (borrowing.return_date?.AddDays(7) >= borrowing.borrow_date)
             {
@@ -135,7 +138,7 @@ namespace HovLibrary2
             _model.SaveChanges();
             MessageBox.Show(@"Data successfully changed.", @"Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            LoadData(_borrowingFilter);
+            LoadData(_borrowingLastQueryable);
         }
     }
 }

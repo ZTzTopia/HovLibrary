@@ -68,6 +68,13 @@ namespace HovLibrary2
 
         private void SubmitButton_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(titleTextBox.Text) ||
+                string.IsNullOrWhiteSpace(memberNameTextBox.Text))
+            {
+                MessageBox.Show(@"One or more of text box is empty.", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             if (dataGridView.Rows.Count == 0)
             {
                 MessageBox.Show(@"There no row in data grid view.", @"Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);

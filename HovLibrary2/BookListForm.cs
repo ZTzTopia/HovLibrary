@@ -33,7 +33,10 @@ namespace HovLibrary2
                 dataGridView.CellContentClick += DataGridView_CellContentClick;
 
                 LanguageComboBox.Items.AddRange(new object[] { "" });
-                LanguageComboBox.Items.AddRange(_model.Locations.Where(l => l.deleted_at == null).Select(l => l.name).ToArray<object>());
+                LanguageComboBox.Items.AddRange(_model.Locations
+                    .Where(l => l.deleted_at == null)
+                    .Select(l => l.name)
+                    .ToArray<object>());
                 LanguageComboBox.SelectedIndexChanged += LanguageComboBox_SelectedIndexChanged;
 
                 submitButton.Click += SubmitButton_Click;
@@ -79,10 +82,11 @@ namespace HovLibrary2
             }
 
             var bookDetail = _model.BookDetails
+                .Where(bd => !bd.Borrowings.Any(b => b.deleted_at == null))
                 .FirstOrDefault(bd => bd.id == bookDetailId);
             if (bookDetail == null)
             {
-                MessageBox.Show(@"Failed to get book detail data by id.", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(@"Failed to get book detail data by id or maybe the book is currently borrowed.", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

@@ -109,6 +109,16 @@ namespace HovLibrary2
 
         private void SaveChangesButton_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(nameTextBox.Text) ||
+                string.IsNullOrWhiteSpace(phoneTextBox.Text) ||
+                string.IsNullOrWhiteSpace(emailTextBox.Text) ||
+                string.IsNullOrWhiteSpace(addressTextBox.Text) ||
+                string.IsNullOrWhiteSpace(cityOfBirthTextBox.Text))
+            {
+                MessageBox.Show(@"One or more of text box is empty.", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             saveChangesButton.Enabled = false;
 
             var member = _model.Members
